@@ -61,11 +61,11 @@ export class Particle {
         this.size = randomRange(2, 6);
     }
 
-    update(): boolean {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vy += 0.2; // gravity
-        this.life--;
+    update(delta = 1): boolean {
+        this.x += this.vx * delta;
+        this.y += this.vy * delta;
+        this.vy += 0.2 * delta; // gravity
+        this.life -= delta;
         return this.life > 0;
     }
 
@@ -96,10 +96,10 @@ export class DamageNumber {
         this.vy = -2;
     }
 
-    update(): boolean {
-        this.y += this.vy;
-        this.vy *= 0.95;
-        this.life--;
+    update(delta = 1): boolean {
+        this.y += this.vy * delta;
+        this.vy *= Math.pow(0.95, delta);
+        this.life -= delta;
         return this.life > 0;
     }
 

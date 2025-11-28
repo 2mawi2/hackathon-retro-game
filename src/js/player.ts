@@ -178,13 +178,18 @@ export class Player {
         return this.stats.skillModifiers.berserkerMode && this.health < this.maxHealth * 0.3;
     }
 
-    update(inputState: { left: boolean; right: boolean; up: boolean; attack: boolean }, groundY: number, levelMechanics?: LevelMechanics) {
+    update(
+        inputState: { left: boolean; right: boolean; up: boolean; attack: boolean },
+        groundY: number,
+        levelMechanics?: LevelMechanics,
+        delta = 1
+    ) {
         this.groundY = groundY;
 
         // Handle knockback
         if (this.knockbackX !== 0) {
-            this.x += this.knockbackX;
-            this.knockbackX *= 0.8;
+            this.x += this.knockbackX * delta;
+            this.knockbackX *= Math.pow(0.8, delta);
             if (Math.abs(this.knockbackX) < 0.5) this.knockbackX = 0;
         }
 
@@ -209,12 +214,13 @@ export class Player {
         // On ice: gradually accelerate/decelerate (sliding feel)
         // Normal: instant velocity change
         if (levelMechanics?.slipperyFloor) {
-            this.velocityX = this.velocityX * friction + targetVelocityX * (1 - friction) * 0.5;
+            const blend = (1 - friction) * 0.5 * delta;
+            this.velocityX += (targetVelocityX - this.velocityX) * blend;
         } else {
             this.velocityX = targetVelocityX;
         }
 
-        this.x += this.velocityX;
+        this.x += this.velocityX * delta;
 
         // Jump - grounded or double jump
         if (inputState.up) {
@@ -231,8 +237,8 @@ export class Player {
         }
 
         // Apply gravity
-        this.velocityY += this.gravity;
-        this.y += this.velocityY;
+        this.velocityY += this.gravity * delta;
+        this.y += this.velocityY * delta;
 
         // Ground collision
         const groundLevel = groundY - this.height;
@@ -244,7 +250,7 @@ export class Player {
 
         // Walk animation (only when moving on ground)
         if (moving && this.isGrounded) {
-            this.walkCycle += 0.2;
+            this.walkCycle += 0.2 * delta;
         } else if (this.isGrounded) {
             this.walkCycle = 0;
         }
@@ -261,25 +267,25 @@ export class Player {
 
         // Update timers
         if (this.attacking) {
-            this.attackTimer--;
+            this.attackTimer -= delta;
             if (this.attackTimer <= 0) {
                 this.attacking = false;
             }
         }
 
         if (this.attackCooldown > 0) {
-            this.attackCooldown--;
+            this.attackCooldown -= delta;
         }
 
         if (this.invincible) {
-            this.invincibleTimer--;
+            this.invincibleTimer -= delta;
             if (this.invincibleTimer <= 0) {
                 this.invincible = false;
             }
         }
 
         // Animation timer
-        this.animTimer++;
+        this.animTimer += delta;
         if (this.animTimer >= 10) {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 4;

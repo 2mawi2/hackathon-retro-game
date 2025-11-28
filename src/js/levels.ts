@@ -106,44 +106,43 @@ export class LevelManager {
         return false; // Game complete!
     }
 
-    update(players: (Player | null)[]) {
+    update(players: (Player | null)[], delta: number) {
         // Update background animations
-        backgroundAnimator.update();
-
+        backgroundAnimator.update(delta);
         // Update enemies
         this.enemies = this.enemies.filter(enemy =>
-            enemy.update(players, 420, this.projectiles)
+            enemy.update(players, 420, this.projectiles, delta)
         );
 
         // Update projectiles
-        this.projectiles = this.projectiles.filter(proj => proj.update());
+        this.projectiles = this.projectiles.filter(proj => proj.update(delta));
 
         // Wind gust mechanic
         if (this.currentLevel.mechanics?.windGusts) {
-            this.updateWind(players);
+            this.updateWind(players, delta);
         }
 
         // Check if wave is complete
         if (this.enemies.length === 0 && !this.waveComplete) {
             this.waveComplete = true;
-            this.waveDelay = 90; // 1.5 second delay before next wave
+            this.waveDelay = 90; // 1.5 second delay before next wave (at 60fps)
         }
 
         // Handle wave transition
         if (this.waveComplete && this.waveDelay > 0) {
-            this.waveDelay--;
+            this.waveDelay -= delta;
             if (this.waveDelay <= 0) {
                 this.nextWave();
             }
         }
     }
 
-    updateWind(players: (Player | null)[]): void {
+    updateWind(players: (Player | null)[], delta: number): void {
         const interval = this.currentLevel.mechanics?.windInterval || 180;
         const force = this.currentLevel.mechanics?.windForce || 3;
-        const warningTime = 60;  // 1 second warning
+        const warningTime = 60;  // 1 second warning (at 60fps)
 
-        this.windTimer++;
+        this.windTimer += delta;
 
         // Show warning before wind starts
         if (!this.windActive && this.windTimer >= interval - warningTime) {
@@ -155,22 +154,22 @@ export class LevelManager {
             this.windActive = true;
             this.windWarning = false;
             this.windTimer = 0;
-            this.windDuration = 60;  // 1 second of wind
+            this.windDuration = 60;  // 1 second of wind (at 60fps)
             this.windDirection = Math.random() > 0.5 ? 1 : -1;
         }
 
         // Apply wind force
         if (this.windActive) {
-            this.windDuration--;
+            this.windDuration -= delta;
 
             players.forEach(player => {
                 if (player && player.health > 0) {
                     // Wind pushes player (can be resisted with movement)
-                    player.x += this.windDirection * force * 0.5;
+                    player.x += this.windDirection * force * 0.5 * delta;
 
                     // Stronger effect if airborne
                     if (!player.isGrounded) {
-                        player.x += this.windDirection * force * 0.3;
+                        player.x += this.windDirection * force * 0.3 * delta;
                     }
 
                     // Keep player in bounds

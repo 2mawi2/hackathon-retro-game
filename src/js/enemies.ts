@@ -1,5 +1,6 @@
 import { CANVAS_WIDTH, EnemyType } from './constants';
 import { randomInt, distance } from './utils';
+import type { Player } from './player';
 
 class Enemy {
     x: number;
@@ -138,16 +139,16 @@ class Enemy {
         this.health = this.maxHealth;
     }
 
-    update(players, groundY, projectiles) {
+    update(players: (Player | null)[], groundY: number, projectiles: Fireball[], delta: number) {
         if (this.dead) {
-            this.deathTimer++;
+            this.deathTimer += delta;
             return this.deathTimer < 30;
         }
 
         // Handle knockback
         if (this.knockbackX !== 0) {
-            this.x += this.knockbackX;
-            this.knockbackX *= 0.85;
+            this.x += this.knockbackX * delta;
+            this.knockbackX *= Math.pow(0.85, delta);
             if (Math.abs(this.knockbackX) < 0.5) this.knockbackX = 0;
         }
 
@@ -170,7 +171,7 @@ class Enemy {
 
             // Move towards player
             if (closestDist > 60) {
-                this.x += this.facing * this.speed;
+                this.x += this.facing * this.speed * delta;
             }
 
             // Attack if close
@@ -201,11 +202,11 @@ class Enemy {
         }
 
         // Update timers
-        if (this.attackTimer > 0) this.attackTimer--;
-        if (this.attackCooldown > 0) this.attackCooldown--;
+        if (this.attackTimer > 0) this.attackTimer -= delta;
+        if (this.attackCooldown > 0) this.attackCooldown -= delta;
 
         // Animation
-        this.animTimer++;
+        this.animTimer += delta;
         if (this.animTimer >= 15) {
             this.animTimer = 0;
             this.animFrame = (this.animFrame + 1) % 2;
@@ -508,10 +509,10 @@ class Fireball {
         this.life = 120;
     }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life--;
+    update(delta: number) {
+        this.x += this.vx * delta;
+        this.y += this.vy * delta;
+        this.life -= delta;
         return this.life > 0 && this.x > -50 && this.x < CANVAS_WIDTH + 50;
     }
 

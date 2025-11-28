@@ -89,16 +89,24 @@ class Game {
     }
 
     gameLoop(timestamp: number) {
+        let deltaMs = 16.6667;
+        if (this.lastTime) {
+            const frameDelta = timestamp - this.lastTime;
+            deltaMs = Math.min(50, frameDelta > 0 ? frameDelta : 16.6667);
+        }
         this.lastTime = timestamp;
 
+        // Normalize delta to 60fps units so legacy per-frame constants still feel right
+        const delta = deltaMs / 16.6667;
+
         input.update();
-        this.update();
+        this.update(delta || 1);
         this.draw();
 
         requestAnimationFrame(this.gameLoop);
     }
 
-    update() {
+    update(delta: number) {
         switch (this.state) {
             case GameState.MENU:
                 // Skill tree preview from menu
@@ -155,7 +163,7 @@ class Game {
                     return;
                 }
 
-                this.updateGame();
+                this.updateGame(delta);
                 break;
 
             case GameState.SHOP: {
@@ -182,18 +190,18 @@ class Game {
         }
     }
 
-    updateGame() {
+    updateGame(delta: number) {
         // Update players
         const levelMechanics = this.levelManager.currentLevel.mechanics;
         this.players.forEach((player, i) => {
             if (player.health <= 0) return;
 
             const inputState = i === 0 ? input.getPlayer1Input() : input.getPlayer2Input();
-            player.update(inputState, this.groundY, levelMechanics);
+            player.update(inputState, this.groundY, levelMechanics, delta);
         });
 
         // Update level (enemies, projectiles)
-        this.levelManager.update(this.players);
+        this.levelManager.update(this.players, delta);
 
         // Check player attacks on enemies
         this.players.forEach(player => {
@@ -325,10 +333,10 @@ class Game {
         });
 
         // Update particles
-        this.particles = this.particles.filter(p => p.update());
+        this.particles = this.particles.filter(p => p.update(delta));
 
         // Update damage numbers
-        this.damageNumbers = this.damageNumbers.filter(d => d.update());
+        this.damageNumbers = this.damageNumbers.filter(d => d.update(delta));
 
         // Check for level completion
         if (this.levelManager.levelComplete) {
