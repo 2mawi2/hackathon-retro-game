@@ -1,8 +1,8 @@
-// Level 6: The Final Battle (Castle)
+// Level 7: The Final Battle (Castle)
 import { EnemyType } from '../../constants';
 
 export const castle = {
-    id: 6,
+    id: 7,
     name: 'The Final Battle',
     background: 'castle',
     waves: [

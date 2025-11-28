@@ -1,9 +1,9 @@
-// Level 5: Sky Citadel (Sky Castle)
+// Level 6: Sky Citadel (Sky Castle)
 // Penultimate challenge with wind gusts - Double Jump shines here
 import { EnemyType, LevelData } from '../../constants';
 
 export const skyCastle: LevelData = {
-    id: 5,
+    id: 6,
     name: 'Sky Citadel',
     background: 'skyCastle',
     waves: [

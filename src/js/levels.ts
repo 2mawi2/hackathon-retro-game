@@ -72,11 +72,12 @@ export class LevelManager {
     spawnWave() {
         const wave = this.currentWave;
         const groundY = 420;
+        const levelBackground = this.currentLevel.background;
 
         wave.enemies.forEach((enemyType, index) => {
             // Spawn enemies from the right side
             const x = 600 + index * 100 + randomInt(-20, 20);
-            const enemy = new Enemy(x, groundY - 60, enemyType);
+            const enemy = new Enemy(x, groundY - 60, enemyType, levelBackground);
             this.enemies.push(enemy);
         });
 
@@ -230,6 +231,9 @@ export class LevelManager {
                 this.drawMountains(ctx, width, groundY);
                 this.drawClouds(ctx, width);
                 break;
+            case 'iceCave':
+                this.drawIceCave(ctx, width, groundY);
+                break;
             case 'volcano':
                 this.drawVolcano(ctx, width, groundY);
                 this.drawLava(ctx, width, groundY);
@@ -332,6 +336,55 @@ export class LevelManager {
         ctx.lineTo(450, groundY - 220);
         ctx.lineTo(480, groundY - 195);
         ctx.fill();
+    }
+
+    drawIceCave(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
+        // Cave ceiling with stalactites
+        ctx.fillStyle = '#1a2a3a';
+        ctx.fillRect(0, 0, width, 80);
+
+        // Icicles hanging down
+        const iciclePositions = [50, 150, 280, 420, 550, 680, 750];
+        iciclePositions.forEach((x, i) => {
+            const height = 40 + (i % 3) * 20;
+            ctx.fillStyle = '#a8d8ea';
+            ctx.beginPath();
+            ctx.moveTo(x, 80);
+            ctx.lineTo(x + 10, 80);
+            ctx.lineTo(x + 5, 80 + height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Icicle highlight
+            ctx.fillStyle = '#d4f1f9';
+            ctx.beginPath();
+            ctx.moveTo(x + 2, 80);
+            ctx.lineTo(x + 5, 80);
+            ctx.lineTo(x + 4, 80 + height * 0.7);
+            ctx.closePath();
+            ctx.fill();
+        });
+
+        // Frozen lake patches (decorative)
+        ctx.fillStyle = 'rgba(168, 216, 234, 0.3)';
+        ctx.fillRect(100, groundY - 15, 120, 10);
+        ctx.fillRect(400, groundY - 15, 150, 10);
+        ctx.fillRect(650, groundY - 15, 100, 10);
+
+        // Ice sparkles (animated)
+        ctx.fillStyle = '#ffffff';
+        const time = Date.now() / 200;
+        for (let i = 0; i < 15; i++) {
+            const sparkleX = (i * 53 + time * 2) % width;
+            const sparkleY = 100 + (i * 37) % (groundY - 120);
+            const size = Math.sin(time + i) > 0.7 ? 3 : 1;
+            ctx.fillRect(sparkleX, sparkleY, size, size);
+        }
+
+        // Distant cave walls
+        ctx.fillStyle = '#0d1520';
+        ctx.fillRect(0, 100, 30, groundY - 100);
+        ctx.fillRect(width - 25, 120, 25, groundY - 120);
     }
 
     drawVolcano(ctx: CanvasRenderingContext2D, width: number, groundY: number) {

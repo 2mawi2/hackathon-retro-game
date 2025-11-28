@@ -22,13 +22,16 @@ class Enemy {
     exp: number = 0;
     gold: number = 0;
     color: string = '';
+    baseColor: string = '';
     canFly: boolean = false;
     isBoss: boolean = false;
+    levelBackground: string = '';
 
-    constructor(x: number, y: number, type: string) {
+    constructor(x: number, y: number, type: string, levelBackground: string = '') {
         this.x = x;
         this.y = y;
         this.type = type;
+        this.levelBackground = levelBackground;
         this.facing = -1;
         this.attackTimer = 0;
         this.attackCooldown = 0;
@@ -41,6 +44,19 @@ class Enemy {
         this.setupStats();
     }
 
+    getColorForLevel(baseColor: string): string {
+        if (this.levelBackground === 'iceCave') {
+            // Return ice-themed color variant
+            const iceColors: Record<string, string> = {
+                '#2ecc71': '#87CEEB',  // Slime green → ice blue
+                '#27ae60': '#5DADE2',  // Goblin green → frost blue
+                '#1e8449': '#F0F8FF'   // Orc dark green → white (Yeti)
+            };
+            return iceColors[baseColor] || baseColor;
+        }
+        return baseColor;
+    }
+
     setupStats() {
         switch (this.type) {
             case EnemyType.SLIME:
@@ -51,7 +67,8 @@ class Enemy {
                 this.speed = 1;
                 this.exp = 15;
                 this.gold = randomInt(5, 15);
-                this.color = '#2ecc71';
+                this.baseColor = '#2ecc71';
+                this.color = this.getColorForLevel(this.baseColor);
                 break;
 
             case EnemyType.GOBLIN:
@@ -62,7 +79,8 @@ class Enemy {
                 this.speed = 2;
                 this.exp = 25;
                 this.gold = randomInt(10, 25);
-                this.color = '#27ae60';
+                this.baseColor = '#27ae60';
+                this.color = this.getColorForLevel(this.baseColor);
                 break;
 
             case EnemyType.SKELETON:
@@ -73,7 +91,8 @@ class Enemy {
                 this.speed = 1.5;
                 this.exp = 40;
                 this.gold = randomInt(20, 40);
-                this.color = '#ecf0f1';
+                this.baseColor = '#ecf0f1';
+                this.color = this.getColorForLevel(this.baseColor);
                 break;
 
             case EnemyType.ORC:
@@ -84,7 +103,8 @@ class Enemy {
                 this.speed = 1.2;
                 this.exp = 60;
                 this.gold = randomInt(30, 60);
-                this.color = '#1e8449';
+                this.baseColor = '#1e8449';
+                this.color = this.getColorForLevel(this.baseColor);
                 break;
 
             case EnemyType.DRAGON:
@@ -95,7 +115,8 @@ class Enemy {
                 this.speed = 1.5;
                 this.exp = 100;
                 this.gold = randomInt(50, 100);
-                this.color = '#c0392b';
+                this.baseColor = '#c0392b';
+                this.color = this.getColorForLevel(this.baseColor);
                 this.canFly = true;
                 break;
 
@@ -107,7 +128,8 @@ class Enemy {
                 this.speed = 1;
                 this.exp = 300;
                 this.gold = randomInt(200, 400);
-                this.color = '#8e44ad';
+                this.baseColor = '#8e44ad';
+                this.color = this.getColorForLevel(this.baseColor);
                 this.canFly = true;
                 this.isBoss = true;
                 break;

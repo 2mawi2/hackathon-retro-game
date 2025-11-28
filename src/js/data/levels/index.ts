@@ -4,6 +4,7 @@
 import { forest } from './forest';
 import { graveyard } from './graveyard';
 import { mountains } from './mountains';
+import { iceCave } from './iceCave';
 import { volcano } from './volcano';
 import { skyCastle } from './skyCastle';
 import { castle } from './castle';
@@ -14,9 +15,10 @@ export const levels = [
     forest,      // 1 - Tutorial
     graveyard,   // 2 - Night theme
     mountains,   // 3 - Vertical challenge
-    volcano,     // 4 - Fire hazards
-    skyCastle,   // 5 - Wind mechanic
-    castle       // 6 - Final boss
+    iceCave,     // 4 - Ice physics
+    volcano,     // 5 - Fire hazards
+    skyCastle,   // 6 - Wind mechanic
+    castle       // 7 - Final boss
 ];
 
 // Helper to get level by ID

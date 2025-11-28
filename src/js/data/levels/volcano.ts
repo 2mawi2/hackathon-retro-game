@@ -1,8 +1,8 @@
-// Level 4: Dragon's Lair (Volcano)
+// Level 5: Dragon's Lair (Volcano)
 import { EnemyType } from '../../constants';
 
 export const volcano = {
-    id: 4,
+    id: 5,
     name: "Dragon's Lair",
     background: 'volcano',
     waves: [

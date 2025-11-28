@@ -65,7 +65,11 @@ class Game {
             this.players.push(player2);
         }
 
-        this.levelManager.startLevel(0);
+        // Check for ?level=N URL parameter to start at specific level (0-indexed)
+        const urlParams = new URLSearchParams(window.location.search);
+        const startLevel = parseInt(urlParams.get('level') || '0', 10);
+        this.levelManager.startLevel(startLevel);
+
         this.particles = [];
         this.damageNumbers = [];
         this.state = GameState.PLAYING;
@@ -140,11 +144,12 @@ class Game {
 
     updateGame() {
         // Update players
+        const levelMechanics = this.levelManager.currentLevel.mechanics;
         this.players.forEach((player, i) => {
             if (player.health <= 0) return;
 
             const inputState = i === 0 ? input.getPlayer1Input() : input.getPlayer2Input();
-            player.update(inputState, this.groundY);
+            player.update(inputState, this.groundY, levelMechanics);
         });
 
         // Update level (enemies, projectiles)

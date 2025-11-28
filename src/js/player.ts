@@ -1,4 +1,4 @@
-import { CANVAS_WIDTH, EquipmentTier, EquipmentTierData } from './constants';
+import { CANVAS_WIDTH, EquipmentTier, EquipmentTierData, LevelMechanics } from './constants';
 
 export class Player {
     playerNum: number;
@@ -23,6 +23,7 @@ export class Player {
     invincibleTimer: number;
     knockbackX: number;
     knockbackY: number;
+    velocityX: number;
     velocityY: number;
     isGrounded: boolean;
     jumpForce: number;
@@ -72,7 +73,8 @@ export class Player {
         this.knockbackX = 0;
         this.knockbackY = 0;
 
-        // Jump mechanics
+        // Movement
+        this.velocityX = 0;
         this.velocityY = 0;
         this.isGrounded = true;
         this.jumpForce = -12;
@@ -133,7 +135,7 @@ export class Player {
         this.health = Math.floor(this.maxHealth * healthPercent);
     }
 
-    update(inputState, groundY) {
+    update(inputState: { left: boolean; right: boolean; up: boolean; attack: boolean }, groundY: number, levelMechanics?: LevelMechanics) {
         this.groundY = groundY;
 
         // Handle knockback
@@ -143,18 +145,33 @@ export class Player {
             if (Math.abs(this.knockbackX) < 0.5) this.knockbackX = 0;
         }
 
-        // Horizontal movement
+        // Horizontal movement with ice physics
+        const friction = levelMechanics?.slipperyFloor
+            ? (levelMechanics.friction || 0.92)
+            : 0.8;
+
+        let targetVelocityX = 0;
         let moving = false;
         if (inputState.left) {
-            this.x -= this.speed;
+            targetVelocityX = -this.speed;
             this.facing = -1;
             moving = true;
         }
         if (inputState.right) {
-            this.x += this.speed;
+            targetVelocityX = this.speed;
             this.facing = 1;
             moving = true;
         }
+
+        // On ice: gradually accelerate/decelerate (sliding feel)
+        // Normal: instant velocity change
+        if (levelMechanics?.slipperyFloor) {
+            this.velocityX = this.velocityX * friction + targetVelocityX * (1 - friction) * 0.5;
+        } else {
+            this.velocityX = targetVelocityX;
+        }
+
+        this.x += this.velocityX;
 
         // Jump - only when grounded
         if (inputState.up && this.isGrounded) {
@@ -430,6 +447,7 @@ export class Player {
         this.invincibleTimer = 0;
         this.knockbackX = 0;
         this.knockbackY = 0;
+        this.velocityX = 0;
         this.velocityY = 0;
         this.isGrounded = true;
     }
