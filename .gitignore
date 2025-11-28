@@ -1,2 +1,4 @@
 node_modules
 .mcp.json
+.vercel
+.env*.local
