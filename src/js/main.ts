@@ -6,6 +6,7 @@ import { Shop } from './shop';
 import { UI } from './ui';
 import { checkCollision, Particle, DamageNumber, randomRange } from './utils';
 import { sound } from './sound';
+import { music } from './music';
 import { SkillTree } from './skills/skillTree';
 import { SkillTreeUI } from './ui/skillTreeUI';
 import { PlayerStats } from './playerStats';
@@ -82,6 +83,9 @@ class Game {
         this.particles = [];
         this.damageNumbers = [];
         this.state = GameState.PLAYING;
+
+        // Start level music
+        music.playLevel(this.levelManager.currentLevelIndex);
     }
 
     gameLoop(timestamp: number) {
@@ -119,6 +123,7 @@ class Game {
                 if (input.isConfirm()) {
                     sound.menuConfirm();
                     sound.init(); // Initialize audio context on first user interaction
+                    music.init(); // Initialize music audio context
                     this.initGame(this.ui.menuSelection === 1);
                 }
                 break;
@@ -144,6 +149,8 @@ class Game {
                     if (input.isJustPressed('b') || input.isJustPressed('KeyB')) {
                         this.state = GameState.SHOP;
                         this.paused = false;
+                        // Play shop music
+                        music.play('shop');
                     }
                     return;
                 }
@@ -155,6 +162,8 @@ class Game {
                 const stayInShop = this.shop.update(input, this.players[0]);
                 if (!stayInShop) {
                     this.state = GameState.PLAYING;
+                    // Resume level music when leaving shop
+                    music.playLevel(this.levelManager.currentLevelIndex);
                 }
                 break;
             }
@@ -325,8 +334,10 @@ class Game {
         if (this.levelManager.levelComplete) {
             if (this.levelManager.isLastLevel) {
                 this.state = GameState.VICTORY;
+                music.play('victory');
             } else {
                 this.state = GameState.LEVEL_COMPLETE;
+                // Keep current level music during level complete screen
             }
         }
 
@@ -334,6 +345,7 @@ class Game {
         const allDead = this.players.every(p => p.health <= 0);
         if (allDead) {
             this.state = GameState.GAME_OVER;
+            music.play('gameover');
         }
     }
 
@@ -363,8 +375,12 @@ class Game {
                         this.levelManager.startLevel(this.levelManager.currentLevelIndex);
                         this.players.forEach(p => p.reset());
                         this.state = GameState.PLAYING;
+                        // Start new level's music
+                        music.playLevel(this.levelManager.currentLevelIndex);
                     } else if (action === 'shop') {
                         this.state = GameState.SHOP;
+                        // Play shop music
+                        music.play('shop');
                     } else if (action === 'skillTree') {
                         this.skillTreeUI.toggle();
                     }
@@ -389,6 +405,8 @@ class Game {
                         p.y = this.groundY - 60;
                     });
                     this.state = GameState.PLAYING;
+                    // Restart level music
+                    music.playLevel(this.levelManager.currentLevelIndex);
                 }
                 break;
 
@@ -397,6 +415,8 @@ class Game {
                 if (this.ui.drawVictory(this.ctx, input)) {
                     this.state = GameState.MENU;
                     this.ui.menuSelection = 0;
+                    // Play menu music
+                    music.play('menu');
                 }
                 break;
         }
@@ -430,4 +450,15 @@ class Game {
 // Start the game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     new Game();
+
+    // Start menu music on first user interaction (required by browsers)
+    const startMenuMusic = () => {
+        music.init();
+        music.play('menu');
+        document.removeEventListener('click', startMenuMusic);
+        document.removeEventListener('keydown', startMenuMusic);
+    };
+
+    document.addEventListener('click', startMenuMusic, { once: true });
+    document.addEventListener('keydown', startMenuMusic, { once: true });
 });
