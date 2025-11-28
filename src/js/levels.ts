@@ -14,6 +14,12 @@ export class LevelManager {
     waveComplete: boolean;
     waveDelay: number;
     levelComplete: boolean;
+    // Wind system
+    windTimer: number;
+    windActive: boolean;
+    windDirection: number;  // 1 = right, -1 = left
+    windDuration: number;
+    windWarning: boolean;
 
     constructor() {
         this.currentLevelIndex = 0;
@@ -23,6 +29,12 @@ export class LevelManager {
         this.waveComplete = false;
         this.waveDelay = 0;
         this.levelComplete = false;
+        // Wind system init
+        this.windTimer = 0;
+        this.windActive = false;
+        this.windDirection = 1;
+        this.windDuration = 0;
+        this.windWarning = false;
     }
 
     get currentLevel(): LevelData {
@@ -48,6 +60,12 @@ export class LevelManager {
         this.projectiles = [];
         this.waveComplete = false;
         this.levelComplete = false;
+        // Reset wind system
+        this.windTimer = 0;
+        this.windActive = false;
+        this.windDirection = 1;
+        this.windDuration = 0;
+        this.windWarning = false;
         this.spawnWave();
     }
 
@@ -93,6 +111,11 @@ export class LevelManager {
         // Update projectiles
         this.projectiles = this.projectiles.filter(proj => proj.update());
 
+        // Wind gust mechanic
+        if (this.currentLevel.mechanics?.windGusts) {
+            this.updateWind(players);
+        }
+
         // Check if wave is complete
         if (this.enemies.length === 0 && !this.waveComplete) {
             this.waveComplete = true;
@@ -104,6 +127,53 @@ export class LevelManager {
             this.waveDelay--;
             if (this.waveDelay <= 0) {
                 this.nextWave();
+            }
+        }
+    }
+
+    updateWind(players: (Player | null)[]): void {
+        const interval = this.currentLevel.mechanics?.windInterval || 180;
+        const force = this.currentLevel.mechanics?.windForce || 3;
+        const warningTime = 60;  // 1 second warning
+
+        this.windTimer++;
+
+        // Show warning before wind starts
+        if (!this.windActive && this.windTimer >= interval - warningTime) {
+            this.windWarning = true;
+        }
+
+        // Start new gust
+        if (!this.windActive && this.windTimer >= interval) {
+            this.windActive = true;
+            this.windWarning = false;
+            this.windTimer = 0;
+            this.windDuration = 60;  // 1 second of wind
+            this.windDirection = Math.random() > 0.5 ? 1 : -1;
+        }
+
+        // Apply wind force
+        if (this.windActive) {
+            this.windDuration--;
+
+            players.forEach(player => {
+                if (player && player.health > 0) {
+                    // Wind pushes player (can be resisted with movement)
+                    player.x += this.windDirection * force * 0.5;
+
+                    // Stronger effect if airborne
+                    if (!player.isGrounded) {
+                        player.x += this.windDirection * force * 0.3;
+                    }
+
+                    // Keep player in bounds
+                    player.x = Math.max(0, Math.min(800 - player.width, player.x));
+                }
+            });
+
+            // End gust
+            if (this.windDuration <= 0) {
+                this.windActive = false;
             }
         }
     }
@@ -167,6 +237,15 @@ export class LevelManager {
             case 'castle':
                 this.drawCastle(ctx, width, groundY);
                 this.drawMoon(ctx);
+                break;
+            case 'skyCastle':
+                this.drawSkyCastle(ctx, width, groundY);
+                if (this.windActive) {
+                    this.drawWindEffect(ctx, width, groundY);
+                }
+                if (this.windWarning && !this.windActive) {
+                    this.drawWindWarning(ctx, width);
+                }
                 break;
         }
     }
@@ -334,6 +413,143 @@ export class LevelManager {
             ctx.fillStyle = '#1a0a2e';
             ctx.fillRect(200 + i * 40, groundY - 170, 25, 25);
         }
+    }
+
+    drawSkyCastle(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
+        const time = Date.now() / 1000;
+
+        // Distant clouds (parallax background)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        const cloudPositions: [number, number][] = [[50, 60], [200, 90], [400, 50], [600, 80], [750, 70]];
+        cloudPositions.forEach(([x, y]) => {
+            const drift = (Date.now() / 100) % width;
+            const cloudX = (x + drift * 0.1) % width;
+            ctx.fillRect(cloudX, y, 80, 30);
+            ctx.fillRect(cloudX + 10, y - 10, 60, 25);
+            ctx.fillRect(cloudX + 20, y + 15, 50, 20);
+        });
+
+        // Floating islands in background
+        ctx.fillStyle = '#8B7355';
+        ctx.beginPath();
+        ctx.ellipse(150, groundY - 100, 60, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(130, groundY - 115, 40, 15);
+
+        ctx.fillStyle = '#8B7355';
+        ctx.beginPath();
+        ctx.ellipse(650, groundY - 150, 40, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Castle towers in distance
+        ctx.fillStyle = '#4a4a6a';
+        ctx.fillRect(680, groundY - 250, 40, 150);
+        ctx.fillRect(720, groundY - 200, 30, 100);
+
+        // Tower tops (pointed)
+        ctx.beginPath();
+        ctx.moveTo(680, groundY - 250);
+        ctx.lineTo(700, groundY - 290);
+        ctx.lineTo(720, groundY - 250);
+        ctx.fill();
+
+        // Windows (glowing)
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(695, groundY - 220, 10, 15);
+        ctx.fillRect(695, groundY - 180, 10, 15);
+
+        // Birds flying
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const birdX = (300 + i * 100 + time * 20) % (width + 50) - 25;
+            const birdY = 100 + Math.sin(time + i) * 20 + i * 30;
+            ctx.beginPath();
+            ctx.moveTo(birdX - 8, birdY);
+            ctx.quadraticCurveTo(birdX, birdY - 5, birdX + 8, birdY);
+            ctx.stroke();
+        }
+
+        // Sun with rays
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(700, 60, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sun rays
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + time * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(700 + Math.cos(angle) * 35, 60 + Math.sin(angle) * 35);
+            ctx.lineTo(700 + Math.cos(angle) * 55, 60 + Math.sin(angle) * 55);
+            ctx.stroke();
+        }
+    }
+
+    drawWindEffect(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
+        // Wind indicator lines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
+
+        const dir = this.windDirection;
+        for (let i = 0; i < 20; i++) {
+            const startX = dir > 0 ? (i * 40) % width : width - (i * 40) % width;
+            const y = 100 + (i * 37) % (groundY - 150);
+            const length = 20 + Math.random() * 30;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, y);
+            ctx.lineTo(startX + dir * length, y + Math.sin(Date.now() / 100 + i) * 5);
+            ctx.stroke();
+        }
+
+        // Floating leaves/debris
+        ctx.fillStyle = 'rgba(139, 115, 85, 0.6)';
+        for (let i = 0; i < 10; i++) {
+            const x = (Date.now() / 10 * dir + i * 80) % (width + 100) - 50;
+            const y = 150 + (i * 47) % (groundY - 200);
+            const rotation = Date.now() / 200 + i;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.fillRect(-4, -2, 8, 4);
+            ctx.restore();
+        }
+    }
+
+    drawWindWarning(ctx: CanvasRenderingContext2D, width: number) {
+        // Pulsing warning indicator
+        const alpha = 0.5 + Math.sin(Date.now() / 100) * 0.3;
+        ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('WIND INCOMING!', width / 2, 50);
+
+        // Arrow indicating wind direction (next gust direction is random, so show both)
+        ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`;
+        ctx.lineWidth = 3;
+
+        // Left arrow
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - 80, 70);
+        ctx.lineTo(width / 2 - 100, 70);
+        ctx.lineTo(width / 2 - 90, 60);
+        ctx.moveTo(width / 2 - 100, 70);
+        ctx.lineTo(width / 2 - 90, 80);
+        ctx.stroke();
+
+        // Right arrow
+        ctx.beginPath();
+        ctx.moveTo(width / 2 + 80, 70);
+        ctx.lineTo(width / 2 + 100, 70);
+        ctx.lineTo(width / 2 + 90, 60);
+        ctx.moveTo(width / 2 + 100, 70);
+        ctx.lineTo(width / 2 + 90, 80);
+        ctx.stroke();
     }
 
     adjustColor(hex: string, amount: number): string {
