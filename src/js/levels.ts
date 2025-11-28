@@ -1,5 +1,6 @@
 import { Enemy, Fireball } from './enemies';
 import { randomInt } from './utils';
+import { backgroundAnimator } from './animation';
 import type { Player } from './player';
 import type { LevelData } from './constants';
 
@@ -66,6 +67,8 @@ export class LevelManager {
         this.windDirection = 1;
         this.windDuration = 0;
         this.windWarning = false;
+        // Setup background animations for this level
+        backgroundAnimator.setupForLevel(this.currentLevel.background, 800, 420);
         this.spawnWave();
     }
 
@@ -104,6 +107,9 @@ export class LevelManager {
     }
 
     update(players: (Player | null)[]) {
+        // Update background animations
+        backgroundAnimator.update();
+
         // Update enemies
         this.enemies = this.enemies.filter(enemy =>
             enemy.update(players, 420, this.projectiles)
@@ -220,30 +226,42 @@ export class LevelManager {
 
         switch (levelBg) {
             case 'forest':
-                this.drawTrees(ctx, width, groundY);
-                this.drawClouds(ctx, width);
+                // Use animated trees and clouds
+                backgroundAnimator.drawClouds(ctx);
+                backgroundAnimator.drawTrees(ctx);
+                backgroundAnimator.drawBirds(ctx, false);
                 break;
             case 'graveyard':
-                this.drawGravestones(ctx, width, groundY);
+                // Use animated gravestones with wisps
+                backgroundAnimator.drawGravestones(ctx);
+                backgroundAnimator.drawWisps(ctx, 'rgba(100, 200, 100, ');
                 this.drawMoon(ctx);
                 break;
             case 'mountains':
                 this.drawMountains(ctx, width, groundY);
-                this.drawClouds(ctx, width);
+                backgroundAnimator.drawClouds(ctx);
+                backgroundAnimator.drawBirds(ctx, false);
                 break;
             case 'iceCave':
-                this.drawIceCave(ctx, width, groundY);
+                this.drawIceCaveStatic(ctx, width, groundY);
+                backgroundAnimator.drawIcicles(ctx);
+                backgroundAnimator.drawIceSparkles(ctx);
                 break;
             case 'volcano':
                 this.drawVolcano(ctx, width, groundY);
-                this.drawLava(ctx, width, groundY);
+                backgroundAnimator.drawLavaPools(ctx);
+                backgroundAnimator.drawEmbers(ctx);
                 break;
             case 'castle':
                 this.drawCastle(ctx, width, groundY);
+                backgroundAnimator.drawBirds(ctx, true); // Bats
+                backgroundAnimator.drawWisps(ctx, 'rgba(200, 200, 255, ');
                 this.drawMoon(ctx);
                 break;
             case 'skyCastle':
                 this.drawSkyCastle(ctx, width, groundY);
+                backgroundAnimator.drawClouds(ctx);
+                backgroundAnimator.drawBirds(ctx, false);
                 if (this.windActive) {
                     this.drawWindEffect(ctx, width, groundY);
                 }
@@ -338,48 +356,16 @@ export class LevelManager {
         ctx.fill();
     }
 
-    drawIceCave(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
-        // Cave ceiling with stalactites
+    drawIceCaveStatic(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
+        // Cave ceiling
         ctx.fillStyle = '#1a2a3a';
         ctx.fillRect(0, 0, width, 80);
-
-        // Icicles hanging down
-        const iciclePositions = [50, 150, 280, 420, 550, 680, 750];
-        iciclePositions.forEach((x, i) => {
-            const height = 40 + (i % 3) * 20;
-            ctx.fillStyle = '#a8d8ea';
-            ctx.beginPath();
-            ctx.moveTo(x, 80);
-            ctx.lineTo(x + 10, 80);
-            ctx.lineTo(x + 5, 80 + height);
-            ctx.closePath();
-            ctx.fill();
-
-            // Icicle highlight
-            ctx.fillStyle = '#d4f1f9';
-            ctx.beginPath();
-            ctx.moveTo(x + 2, 80);
-            ctx.lineTo(x + 5, 80);
-            ctx.lineTo(x + 4, 80 + height * 0.7);
-            ctx.closePath();
-            ctx.fill();
-        });
 
         // Frozen lake patches (decorative)
         ctx.fillStyle = 'rgba(168, 216, 234, 0.3)';
         ctx.fillRect(100, groundY - 15, 120, 10);
         ctx.fillRect(400, groundY - 15, 150, 10);
         ctx.fillRect(650, groundY - 15, 100, 10);
-
-        // Ice sparkles (animated)
-        ctx.fillStyle = '#ffffff';
-        const time = Date.now() / 200;
-        for (let i = 0; i < 15; i++) {
-            const sparkleX = (i * 53 + time * 2) % width;
-            const sparkleY = 100 + (i * 37) % (groundY - 120);
-            const size = Math.sin(time + i) > 0.7 ? 3 : 1;
-            ctx.fillRect(sparkleX, sparkleY, size, size);
-        }
 
         // Distant cave walls
         ctx.fillStyle = '#0d1520';
