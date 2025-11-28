@@ -1,4 +1,4 @@
-import { EquipmentType, EquipmentTier, EquipmentTierData } from './constants';
+import { EquipmentTier, EquipmentTierData } from './constants';
 import type { Player } from './player';
 import type { InputManager } from './input';
 

@@ -26,8 +26,8 @@ class SoundManager {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.initialized = true;
-        } catch (e) {
-            console.warn('Web Audio API not supported');
+        } catch {
+            // Web Audio API not supported - disable sound
             this.enabled = false;
         }
     }

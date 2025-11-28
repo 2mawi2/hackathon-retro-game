@@ -76,7 +76,6 @@ class Game {
     }
 
     gameLoop(timestamp: number) {
-        const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 
         input.update();
@@ -121,12 +120,13 @@ class Game {
                 this.updateGame();
                 break;
 
-            case GameState.SHOP:
+            case GameState.SHOP: {
                 const stayInShop = this.shop.update(input, this.players[0]);
                 if (!stayInShop) {
                     this.state = GameState.PLAYING;
                 }
                 break;
+            }
 
             case GameState.LEVEL_COMPLETE:
                 // Handled in draw
@@ -251,7 +251,7 @@ class Game {
         });
 
         // Check projectile collisions with players
-        this.levelManager.projectiles.forEach((proj, projIndex) => {
+        this.levelManager.projectiles.forEach((proj) => {
             this.players.forEach(player => {
                 if (player.health <= 0 || player.invincible) return;
 

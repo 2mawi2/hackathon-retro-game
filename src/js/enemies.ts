@@ -1,5 +1,5 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, EnemyType } from './constants';
-import { checkCollision, randomRange, randomInt, distance } from './utils';
+import { CANVAS_WIDTH, EnemyType } from './constants';
+import { randomInt, distance } from './utils';
 
 class Enemy {
     x: number;
@@ -421,7 +421,6 @@ class Enemy {
     }
 
     drawDragon(ctx, x, y) {
-        const scale = this.isBoss ? 1.4 : 1;
         const w = this.width;
         const h = this.height;
 

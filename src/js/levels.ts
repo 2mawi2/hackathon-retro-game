@@ -254,7 +254,7 @@ export class LevelManager {
         }
     }
 
-    drawClouds(ctx: CanvasRenderingContext2D, width: number) {
+    drawClouds(ctx: CanvasRenderingContext2D, _width: number) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         const cloudPositions = [[50, 50], [200, 80], [450, 40], [600, 90], [750, 60]];
         cloudPositions.forEach(([x, y]) => {
