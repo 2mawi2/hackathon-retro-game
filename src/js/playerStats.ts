@@ -1,7 +1,61 @@
 // Player Stats - Separated for skill tree modifications
-import { EquipmentTier } from './constants.js';
+import { EquipmentTier, EquipmentTierData } from './constants';
+
+export interface SkillModifiers {
+    healthMult: number;
+    damageMult: number;
+    speedMult: number;
+    defenseMult: number;
+    critChanceBonus: number;
+    critMultBonus: number;
+    jumpForceMult: number;
+    doubleJump: boolean;
+    dashAbility: boolean;
+    shieldAbility: boolean;
+    lifeSteal: number;
+    attackSpeed: number;
+    [key: string]: number | boolean;
+}
+
+export interface PlayerEquipment {
+    sword: EquipmentTierData;
+    armor: EquipmentTierData;
+    helmet: EquipmentTierData;
+    boots: EquipmentTierData;
+}
 
 export class PlayerStats {
+    // Base stats
+    baseHealth: number;
+    baseDamage: number;
+    baseSpeed: number;
+    baseDefense: number;
+    baseCritChance: number;
+    baseCritMultiplier: number;
+    baseJumpForce: number;
+
+    // Calculated stats
+    maxHealth: number;
+    damage: number;
+    speed: number;
+    defense: number;
+    critChance: number;
+    critMultiplier: number;
+    jumpForce: number;
+
+    // Skill modifiers
+    skillModifiers: SkillModifiers;
+
+    // Equipment
+    equipment: PlayerEquipment;
+
+    // Progression
+    level: number;
+    exp: number;
+    expToNextLevel: number;
+    gold: number;
+    skillPoints: number;
+
     constructor() {
         // Base stats
         this.baseHealth = 100;
@@ -79,7 +133,7 @@ export class PlayerStats {
         this.jumpForce = this.baseJumpForce * this.skillModifiers.jumpForceMult;
     }
 
-    addExp(amount) {
+    addExp(amount: number): boolean {
         this.exp += amount;
         let leveledUp = false;
         while (this.exp >= this.expToNextLevel) {
@@ -95,11 +149,11 @@ export class PlayerStats {
         return leveledUp;
     }
 
-    addGold(amount) {
+    addGold(amount: number) {
         this.gold += amount;
     }
 
-    spendGold(amount) {
+    spendGold(amount: number): boolean {
         if (this.gold >= amount) {
             this.gold -= amount;
             return true;
@@ -108,12 +162,12 @@ export class PlayerStats {
     }
 
     // Apply a skill modifier (called by skill tree system)
-    applySkillModifier(key, value) {
+    applySkillModifier(key: string, value: number | boolean) {
         if (key in this.skillModifiers) {
             if (typeof this.skillModifiers[key] === 'boolean') {
-                this.skillModifiers[key] = value;
+                this.skillModifiers[key] = value as boolean;
             } else {
-                this.skillModifiers[key] += value;
+                (this.skillModifiers[key] as number) += value as number;
             }
             this.recalculate();
         }

@@ -1,16 +1,30 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GameState } from './constants.js';
-import { input } from './input.js';
-import { Player } from './player.js';
-import { LevelManager } from './levels.js';
-import { Shop } from './shop.js';
-import { UI } from './ui.js';
-import { checkCollision, Particle, DamageNumber, randomRange } from './utils.js';
-import { sound } from './sound.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GameState, GameStateType } from './constants';
+import { input } from './input';
+import { Player } from './player';
+import { LevelManager } from './levels';
+import { Shop } from './shop';
+import { UI } from './ui';
+import { checkCollision, Particle, DamageNumber, randomRange } from './utils';
+import { sound } from './sound';
 
 class Game {
+    canvas: HTMLCanvasElement;
+    ctx: CanvasRenderingContext2D;
+    state: GameStateType;
+    coopMode: boolean;
+    players: Player[];
+    levelManager: LevelManager;
+    shop: Shop;
+    ui: UI;
+    particles: Particle[];
+    damageNumbers: DamageNumber[];
+    groundY: number;
+    paused: boolean;
+    lastTime: number;
+
     constructor() {
-        this.canvas = document.getElementById('game');
-        this.ctx = this.canvas.getContext('2d');
+        this.canvas = document.getElementById('game') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d')!;
 
         this.canvas.width = CANVAS_WIDTH;
         this.canvas.height = CANVAS_HEIGHT;
@@ -35,7 +49,7 @@ class Game {
         requestAnimationFrame(this.gameLoop);
     }
 
-    initGame(coopMode) {
+    initGame(coopMode: boolean) {
         this.coopMode = coopMode;
         this.players = [];
 
@@ -57,7 +71,7 @@ class Game {
         this.state = GameState.PLAYING;
     }
 
-    gameLoop(timestamp) {
+    gameLoop(timestamp: number) {
         const deltaTime = timestamp - this.lastTime;
         this.lastTime = timestamp;
 

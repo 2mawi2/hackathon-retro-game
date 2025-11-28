@@ -1,12 +1,18 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GameState } from './constants.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, GameState } from './constants';
+import type { LevelManager } from './levels';
+import type { Player } from './player';
+import type { InputManager } from './input';
 
 export class UI {
+    menuSelection: number;
+    menuOptions: string[];
+
     constructor() {
         this.menuSelection = 0;
         this.menuOptions = ['Start Game', '2 Player Co-op'];
     }
 
-    drawMenu(ctx) {
+    drawMenu(ctx: CanvasRenderingContext2D) {
         // Background
         ctx.fillStyle = '#0f0c29';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -69,7 +75,7 @@ export class UI {
         ctx.fillText('Retro Game Jam 2024', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 20);
     }
 
-    drawHUD(ctx, players, levelManager) {
+    drawHUD(ctx: CanvasRenderingContext2D, players: (Player | null)[], levelManager: LevelManager) {
         const level = levelManager.currentLevel;
         const wave = levelManager.currentWaveIndex + 1;
         const totalWaves = level.waves.length;
@@ -151,7 +157,7 @@ export class UI {
         }
     }
 
-    drawLevelComplete(ctx, levelManager, input) {
+    drawLevelComplete(ctx: CanvasRenderingContext2D, levelManager: LevelManager, input: InputManager): string | null {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -190,7 +196,7 @@ export class UI {
         return null;
     }
 
-    drawGameOver(ctx, input) {
+    drawGameOver(ctx: CanvasRenderingContext2D, input: InputManager): boolean {
         ctx.fillStyle = 'rgba(100, 0, 0, 0.9)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -213,7 +219,7 @@ export class UI {
         return input.isConfirm();
     }
 
-    drawVictory(ctx, input) {
+    drawVictory(ctx: CanvasRenderingContext2D, input: InputManager): boolean {
         ctx.fillStyle = 'rgba(0, 50, 0, 0.9)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -255,7 +261,7 @@ export class UI {
         return input.isConfirm();
     }
 
-    drawPauseOverlay(ctx) {
+    drawPauseOverlay(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 

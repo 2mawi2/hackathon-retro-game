@@ -1,5 +1,5 @@
 // Level 4: Dragon's Lair (Volcano)
-import { EnemyType } from '../../constants.js';
+import { EnemyType } from '../../constants';
 
 export const volcano = {
     id: 4,

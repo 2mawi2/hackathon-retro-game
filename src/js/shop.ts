@@ -1,7 +1,32 @@
-import { EquipmentType, EquipmentTier } from './constants.js';
+import { EquipmentType, EquipmentTier, EquipmentTierData } from './constants';
+import type { Player } from './player';
+import type { InputManager } from './input';
+
+interface EquipmentUpgrade {
+    tier: EquipmentTierData;
+    price: number;
+    name: string;
+    description: string;
+}
+
+interface Consumable {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    effect: (player: Player) => void;
+}
+
+function isConsumable(item: EquipmentUpgrade | Consumable): item is Consumable {
+    return 'effect' in item;
+}
+
+function isEquipmentUpgrade(item: EquipmentUpgrade | Consumable): item is EquipmentUpgrade {
+    return 'tier' in item;
+}
 
 // Shop items configuration
-const equipmentUpgrades = {
+const equipmentUpgrades: Record<string, EquipmentUpgrade[]> = {
     sword: [
         { tier: EquipmentTier.BASIC, price: 0, name: 'Wooden Sword', description: 'A basic training sword' },
         { tier: EquipmentTier.IRON, price: 100, name: 'Iron Sword', description: '+25% damage' },
@@ -36,12 +61,18 @@ const equipmentUpgrades = {
     ]
 };
 
-const consumables = [
+const consumables: Consumable[] = [
     { id: 'health_potion', name: 'Health Potion', price: 30, description: 'Restore 50 HP', effect: (player) => player.heal(50) },
     { id: 'full_heal', name: 'Full Restore', price: 100, description: 'Restore all HP', effect: (player) => player.heal(player.maxHealth) }
 ];
 
 export class Shop {
+    selectedCategory: number;
+    selectedItem: number;
+    categories: string[];
+    message: string;
+    messageTimer: number;
+
     constructor() {
         this.selectedCategory = 0; // 0=sword, 1=armor, 2=helmet, 3=boots, 4=consumables
         this.selectedItem = 0;
@@ -50,7 +81,7 @@ export class Shop {
         this.messageTimer = 0;
     }
 
-    getAvailableUpgrades(player, category) {
+    getAvailableUpgrades(player: Player, category: string): (EquipmentUpgrade | Consumable)[] {
         if (category === 'items') {
             return consumables;
         }
@@ -63,18 +94,18 @@ export class Shop {
         return upgrades.slice(currentIndex + 1, currentIndex + 4);
     }
 
-    getCurrentEquipment(player, category) {
+    getCurrentEquipment(player: Player, category: string): EquipmentUpgrade | null | undefined {
         if (category === 'items') return null;
         const upgrades = equipmentUpgrades[category];
         const currentTier = player.equipment[category];
         return upgrades.find(u => u.tier.name === currentTier.name);
     }
 
-    canAfford(player, item) {
+    canAfford(player: Player, item: EquipmentUpgrade | Consumable): boolean {
         return player.gold >= item.price;
     }
 
-    purchase(player, category, item) {
+    purchase(player: Player, category: string, item: EquipmentUpgrade | Consumable): boolean {
         if (!this.canAfford(player, item)) {
             this.showMessage('Not enough gold!');
             return false;
@@ -82,13 +113,13 @@ export class Shop {
 
         player.gold -= item.price;
 
-        if (category === 'items') {
+        if (isConsumable(item)) {
             // Consumable
             item.effect(player);
             this.showMessage(`Used ${item.name}!`);
-        } else {
+        } else if (isEquipmentUpgrade(item)) {
             // Equipment upgrade
-            player.equipment[category] = item.tier;
+            player.equipment[category as keyof typeof player.equipment] = item.tier;
             player.calculateStats();
             this.showMessage(`Equipped ${item.name}!`);
         }
@@ -96,12 +127,12 @@ export class Shop {
         return true;
     }
 
-    showMessage(text) {
+    showMessage(text: string) {
         this.message = text;
         this.messageTimer = 120;
     }
 
-    update(input, player) {
+    update(input: InputManager, player: Player): boolean {
         if (this.messageTimer > 0) {
             this.messageTimer--;
         }
@@ -138,7 +169,7 @@ export class Shop {
         return !input.isCancel(); // Return false to exit shop
     }
 
-    draw(ctx, player, width, height) {
+    draw(ctx: CanvasRenderingContext2D, player: Player, width: number, height: number) {
         // Darken background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
         ctx.fillRect(0, 0, width, height);
@@ -232,7 +263,7 @@ export class Shop {
                 }
 
                 // Item name
-                ctx.fillStyle = item.tier ? item.tier.color : '#3498db';
+                ctx.fillStyle = isEquipmentUpgrade(item) ? item.tier.color : '#3498db';
                 if (!canAfford) ctx.fillStyle = '#e74c3c';
                 ctx.font = '12px "Press Start 2P", monospace';
                 ctx.textAlign = 'left';

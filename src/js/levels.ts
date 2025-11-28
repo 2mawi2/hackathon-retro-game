@@ -1,10 +1,20 @@
-import { Enemy } from './enemies.js';
-import { randomInt } from './utils.js';
+import { Enemy, Fireball } from './enemies';
+import { randomInt } from './utils';
+import type { Player } from './player';
+import type { LevelData } from './constants';
 
 // Import levels from separate data files
-import { levels } from './data/levels/index.js';
+import { levels } from './data/levels/index';
 
 export class LevelManager {
+    currentLevelIndex: number;
+    currentWaveIndex: number;
+    enemies: Enemy[];
+    projectiles: Fireball[];
+    waveComplete: boolean;
+    waveDelay: number;
+    levelComplete: boolean;
+
     constructor() {
         this.currentLevelIndex = 0;
         this.currentWaveIndex = 0;
@@ -15,7 +25,7 @@ export class LevelManager {
         this.levelComplete = false;
     }
 
-    get currentLevel() {
+    get currentLevel(): LevelData {
         return levels[this.currentLevelIndex];
     }
 
@@ -23,15 +33,15 @@ export class LevelManager {
         return this.currentLevel.waves[this.currentWaveIndex];
     }
 
-    get isLastLevel() {
+    get isLastLevel(): boolean {
         return this.currentLevelIndex >= levels.length - 1;
     }
 
-    get isLastWave() {
+    get isLastWave(): boolean {
         return this.currentWaveIndex >= this.currentLevel.waves.length - 1;
     }
 
-    startLevel(levelIndex) {
+    startLevel(levelIndex: number) {
         this.currentLevelIndex = Math.min(levelIndex, levels.length - 1);
         this.currentWaveIndex = 0;
         this.enemies = [];
@@ -64,7 +74,7 @@ export class LevelManager {
         }
     }
 
-    nextLevel() {
+    nextLevel(): boolean {
         if (this.currentLevelIndex < levels.length - 1) {
             this.currentLevelIndex++;
             this.currentWaveIndex = 0;
@@ -74,7 +84,7 @@ export class LevelManager {
         return false; // Game complete!
     }
 
-    update(players) {
+    update(players: (Player | null)[]) {
         // Update enemies
         this.enemies = this.enemies.filter(enemy =>
             enemy.update(players, 420, this.projectiles)
@@ -98,7 +108,7 @@ export class LevelManager {
         }
     }
 
-    drawBackground(ctx, width, height) {
+    drawBackground(ctx: CanvasRenderingContext2D, width: number, height: number) {
         const colors = this.currentLevel.colors;
         const groundY = 420;
 
@@ -134,7 +144,7 @@ export class LevelManager {
         }
     }
 
-    drawBackgroundElements(ctx, width, groundY) {
+    drawBackgroundElements(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         const levelBg = this.currentLevel.background;
 
         switch (levelBg) {
@@ -161,7 +171,7 @@ export class LevelManager {
         }
     }
 
-    drawClouds(ctx, width) {
+    drawClouds(ctx: CanvasRenderingContext2D, width: number) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         const cloudPositions = [[50, 50], [200, 80], [450, 40], [600, 90], [750, 60]];
         cloudPositions.forEach(([x, y]) => {
@@ -170,7 +180,7 @@ export class LevelManager {
         });
     }
 
-    drawTrees(ctx, width, groundY) {
+    drawTrees(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         const treePositions = [50, 150, 650, 750];
         treePositions.forEach(x => {
             // Trunk
@@ -186,7 +196,7 @@ export class LevelManager {
         });
     }
 
-    drawGravestones(ctx, width, groundY) {
+    drawGravestones(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         const positions = [80, 200, 350, 500, 680];
         ctx.fillStyle = '#7f8c8d';
         positions.forEach((x, i) => {
@@ -199,7 +209,7 @@ export class LevelManager {
         });
     }
 
-    drawMoon(ctx) {
+    drawMoon(ctx: CanvasRenderingContext2D) {
         ctx.fillStyle = '#f5f5dc';
         ctx.beginPath();
         ctx.arc(680, 80, 50, 0, Math.PI * 2);
@@ -215,7 +225,7 @@ export class LevelManager {
         ctx.fill();
     }
 
-    drawMountains(ctx, width, groundY) {
+    drawMountains(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         // Far mountains
         ctx.fillStyle = '#5d6d7e';
         ctx.beginPath();
@@ -245,7 +255,7 @@ export class LevelManager {
         ctx.fill();
     }
 
-    drawVolcano(ctx, width, groundY) {
+    drawVolcano(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         // Volcano
         ctx.fillStyle = '#4a1c1c';
         ctx.beginPath();
@@ -271,7 +281,7 @@ export class LevelManager {
         ctx.fill();
     }
 
-    drawLava(ctx, width, groundY) {
+    drawLava(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         // Lava pools
         ctx.fillStyle = '#e74c3c';
         ctx.fillRect(100, groundY + 30, 80, 20);
@@ -288,7 +298,7 @@ export class LevelManager {
         ctx.fill();
     }
 
-    drawCastle(ctx, width, groundY) {
+    drawCastle(ctx: CanvasRenderingContext2D, width: number, groundY: number) {
         // Castle silhouette
         ctx.fillStyle = '#1a0a2e';
 
@@ -326,7 +336,7 @@ export class LevelManager {
         }
     }
 
-    adjustColor(hex, amount) {
+    adjustColor(hex: string, amount: number): string {
         const num = parseInt(hex.slice(1), 16);
         const r = Math.min(255, ((num >> 16) & 255) + amount);
         const g = Math.min(255, ((num >> 8) & 255) + amount);
@@ -334,7 +344,7 @@ export class LevelManager {
         return `rgb(${r}, ${g}, ${b})`;
     }
 
-    draw(ctx) {
+    draw(ctx: CanvasRenderingContext2D) {
         // Draw enemies
         this.enemies.forEach(enemy => enemy.draw(ctx));
 

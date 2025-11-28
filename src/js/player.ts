@@ -1,8 +1,50 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, EquipmentTier } from './constants.js';
-import { checkCollision, Particle, DamageNumber } from './utils.js';
+import { CANVAS_WIDTH, EquipmentTier, EquipmentTierData } from './constants';
 
 export class Player {
-    constructor(playerNum, x, y) {
+    playerNum: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    baseSpeed: number;
+    speed: number;
+    maxHealth: number;
+    health: number;
+    baseDamage: number;
+    damage: number;
+    defense: number;
+    critChance: number;
+    critMultiplier: number;
+    facing: number;
+    attacking: boolean;
+    attackTimer: number;
+    attackCooldown: number;
+    invincible: boolean;
+    invincibleTimer: number;
+    knockbackX: number;
+    knockbackY: number;
+    velocityY: number;
+    isGrounded: boolean;
+    jumpForce: number;
+    gravity: number;
+    groundY: number;
+    animFrame: number;
+    animTimer: number;
+    walkCycle: number;
+    equipment: {
+        sword: EquipmentTierData;
+        armor: EquipmentTierData;
+        helmet: EquipmentTierData;
+        boots: EquipmentTierData;
+    };
+    exp: number;
+    level: number;
+    expToNextLevel: number;
+    gold: number;
+    type: string;
+    colors: { primary: string; secondary: string; accent: string };
+
+    constructor(playerNum: number, x: number, y: number) {
         this.playerNum = playerNum;
         this.x = x;
         this.y = y;

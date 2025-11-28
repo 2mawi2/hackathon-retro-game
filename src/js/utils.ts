@@ -1,40 +1,56 @@
 // Utility functions
 
-export function checkCollision(a, b) {
+export interface Rect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export function checkCollision(a: Rect, b: Rect): boolean {
     return a.x < b.x + b.width &&
            a.x + a.width > b.x &&
            a.y < b.y + b.height &&
            a.y + a.height > b.y;
 }
 
-export function drawPixelRect(ctx, x, y, w, h, color) {
+export function drawPixelRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string): void {
     ctx.fillStyle = color;
     ctx.fillRect(Math.floor(x), Math.floor(y), w, h);
 }
 
-export function lerp(start, end, t) {
+export function lerp(start: number, end: number, t: number): number {
     return start + (end - start) * t;
 }
 
-export function clamp(value, min, max) {
+export function clamp(value: number, min: number, max: number): number {
     return Math.max(min, Math.min(max, value));
 }
 
-export function randomRange(min, max) {
+export function randomRange(min: number, max: number): number {
     return Math.random() * (max - min) + min;
 }
 
-export function randomInt(min, max) {
+export function randomInt(min: number, max: number): number {
     return Math.floor(randomRange(min, max + 1));
 }
 
-export function distance(x1, y1, x2, y2) {
+export function distance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 }
 
 // Simple particle class for effects
 export class Particle {
-    constructor(x, y, vx, vy, color, life = 30) {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    color: string;
+    life: number;
+    maxLife: number;
+    size: number;
+
+    constructor(x: number, y: number, vx: number, vy: number, color: string, life = 30) {
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -45,7 +61,7 @@ export class Particle {
         this.size = randomRange(2, 6);
     }
 
-    update() {
+    update(): boolean {
         this.x += this.vx;
         this.y += this.vy;
         this.vy += 0.2; // gravity
@@ -53,7 +69,7 @@ export class Particle {
         return this.life > 0;
     }
 
-    draw(ctx) {
+    draw(ctx: CanvasRenderingContext2D): void {
         const alpha = this.life / this.maxLife;
         ctx.globalAlpha = alpha;
         ctx.fillStyle = this.color;
@@ -64,7 +80,14 @@ export class Particle {
 
 // Damage number floating text
 export class DamageNumber {
-    constructor(x, y, damage, color = '#fff') {
+    x: number;
+    y: number;
+    damage: number | string;
+    color: string;
+    life: number;
+    vy: number;
+
+    constructor(x: number, y: number, damage: number | string, color = '#fff') {
         this.x = x;
         this.y = y;
         this.damage = damage;
@@ -73,20 +96,21 @@ export class DamageNumber {
         this.vy = -2;
     }
 
-    update() {
+    update(): boolean {
         this.y += this.vy;
         this.vy *= 0.95;
         this.life--;
         return this.life > 0;
     }
 
-    draw(ctx) {
+    draw(ctx: CanvasRenderingContext2D): void {
         const alpha = this.life / 60;
         ctx.globalAlpha = alpha;
         ctx.fillStyle = this.color;
         ctx.font = '16px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(Math.floor(this.damage), this.x, this.y);
+        const text = typeof this.damage === 'number' ? Math.floor(this.damage).toString() : this.damage;
+        ctx.fillText(text, this.x, this.y);
         ctx.globalAlpha = 1;
     }
 }

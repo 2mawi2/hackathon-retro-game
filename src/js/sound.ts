@@ -1,6 +1,18 @@
 // Sound Manager - generates retro-style sounds using Web Audio API
 
+// Extend Window interface for webkit prefix
+declare global {
+    interface Window {
+        webkitAudioContext: typeof AudioContext;
+    }
+}
+
 class SoundManager {
+    audioContext: AudioContext | null;
+    enabled: boolean;
+    volume: number;
+    initialized: boolean;
+
     constructor() {
         this.audioContext = null;
         this.enabled = true;
@@ -28,7 +40,7 @@ class SoundManager {
     }
 
     // Create oscillator-based sound
-    playTone(frequency, duration, type = 'square', volumeMult = 1) {
+    playTone(frequency: number, duration: number, type: OscillatorType = 'square', volumeMult: number = 1) {
         if (!this.enabled || !this.audioContext) return;
         this.resume();
 
@@ -50,7 +62,7 @@ class SoundManager {
     }
 
     // Play a sequence of tones
-    playSequence(notes, noteDuration = 0.1) {
+    playSequence(notes: Array<{freq: number, duration?: number, type?: OscillatorType, volume?: number}>, noteDuration: number = 0.1) {
         if (!this.enabled || !this.audioContext) return;
         this.resume();
 
@@ -343,7 +355,7 @@ class SoundManager {
         return this.enabled;
     }
 
-    setVolume(vol) {
+    setVolume(vol: number) {
         this.volume = Math.max(0, Math.min(1, vol));
     }
 }

@@ -1,5 +1,5 @@
 // Level 1: The Forest
-import { EnemyType } from '../../constants.js';
+import { EnemyType } from '../../constants';
 
 export const forest = {
     id: 1,

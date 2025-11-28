@@ -1,5 +1,5 @@
 // Level 2: The Graveyard
-import { EnemyType } from '../../constants.js';
+import { EnemyType } from '../../constants';
 
 export const graveyard = {
     id: 2,

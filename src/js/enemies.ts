@@ -1,8 +1,31 @@
-import { CANVAS_WIDTH, CANVAS_HEIGHT, EnemyType } from './constants.js';
-import { checkCollision, randomRange, randomInt, distance } from './utils.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, EnemyType } from './constants';
+import { checkCollision, randomRange, randomInt, distance } from './utils';
 
 class Enemy {
-    constructor(x, y, type) {
+    x: number;
+    y: number;
+    type: string;
+    facing: number;
+    attackTimer: number;
+    attackCooldown: number;
+    animFrame: number;
+    animTimer: number;
+    knockbackX: number;
+    dead: boolean;
+    deathTimer: number;
+    width: number = 0;
+    height: number = 0;
+    maxHealth: number = 0;
+    health: number = 0;
+    damage: number = 0;
+    speed: number = 0;
+    exp: number = 0;
+    gold: number = 0;
+    color: string = '';
+    canFly: boolean = false;
+    isBoss: boolean = false;
+
+    constructor(x: number, y: number, type: string) {
         this.x = x;
         this.y = y;
         this.type = type;
@@ -444,7 +467,16 @@ class Enemy {
 }
 
 class Fireball {
-    constructor(x, y, vx, damage) {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    width: number;
+    height: number;
+    damage: number;
+    life: number;
+
+    constructor(x: number, y: number, vx: number, damage: number) {
         this.x = x;
         this.y = y;
         this.vx = vx;

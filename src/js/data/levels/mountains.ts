@@ -1,5 +1,5 @@
 // Level 3: The Mountains
-import { EnemyType } from '../../constants.js';
+import { EnemyType } from '../../constants';
 
 export const mountains = {
     id: 3,

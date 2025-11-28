@@ -1,6 +1,19 @@
 // Input handling module
 
-class InputManager {
+export interface PlayerInput {
+    left: boolean;
+    right: boolean;
+    up: boolean;
+    down: boolean;
+    attack: boolean;
+    special: boolean;
+}
+
+export class InputManager {
+    keys: Record<string, boolean>;
+    keysJustPressed: Record<string, boolean>;
+    previousKeys: Record<string, boolean>;
+
     constructor() {
         this.keys = {};
         this.keysJustPressed = {};
@@ -33,16 +46,16 @@ class InputManager {
         this.previousKeys = { ...this.keys };
     }
 
-    isDown(key) {
+    isDown(key: string): boolean {
         return this.keys[key] || false;
     }
 
-    isJustPressed(key) {
+    isJustPressed(key: string): boolean {
         return this.keysJustPressed[key] || false;
     }
 
     // Player 1 controls (WASD + Space)
-    getPlayer1Input() {
+    getPlayer1Input(): PlayerInput {
         return {
             left: this.isDown('a') || this.isDown('KeyA'),
             right: this.isDown('d') || this.isDown('KeyD'),
@@ -54,7 +67,7 @@ class InputManager {
     }
 
     // Player 2 controls (Arrows + Enter)
-    getPlayer2Input() {
+    getPlayer2Input(): PlayerInput {
         return {
             left: this.isDown('ArrowLeft'),
             right: this.isDown('ArrowRight'),
@@ -66,27 +79,27 @@ class InputManager {
     }
 
     // Menu navigation
-    isConfirm() {
+    isConfirm(): boolean {
         return this.isJustPressed('Space') || this.isJustPressed('Enter');
     }
 
-    isCancel() {
+    isCancel(): boolean {
         return this.isJustPressed('Escape');
     }
 
-    isMenuUp() {
+    isMenuUp(): boolean {
         return this.isJustPressed('w') || this.isJustPressed('KeyW') || this.isJustPressed('ArrowUp');
     }
 
-    isMenuDown() {
+    isMenuDown(): boolean {
         return this.isJustPressed('s') || this.isJustPressed('KeyS') || this.isJustPressed('ArrowDown');
     }
 
-    isMenuLeft() {
+    isMenuLeft(): boolean {
         return this.isJustPressed('a') || this.isJustPressed('KeyA') || this.isJustPressed('ArrowLeft');
     }
 
-    isMenuRight() {
+    isMenuRight(): boolean {
         return this.isJustPressed('d') || this.isJustPressed('KeyD') || this.isJustPressed('ArrowRight');
     }
 }

@@ -1,8 +1,45 @@
 // Player Renderer - Handles all player drawing
 // Animation system will hook into this
 
+interface PlayerColors {
+    primary: string;
+    secondary: string;
+    accent: string;
+}
+
+// Generic player interface for rendering
+interface RenderablePlayer {
+    invincible: boolean;
+    invincibleTimer: number;
+    x: number;
+    y: number;
+    walkCycle: number;
+    attacking: boolean;
+    attackTimer: number;
+    facing: number;
+    isGrounded: boolean;
+    stats?: {
+        equipment: {
+            sword: { color: string };
+            armor: { color: string };
+            helmet: { color: string };
+        };
+    };
+    equipment?: {
+        sword: { color: string };
+        armor: { color: string };
+        helmet: { color: string };
+    };
+}
+
 export class PlayerRenderer {
-    constructor(playerType) {
+    playerType: string;
+    colors: PlayerColors;
+    animState: string;
+    animFrame: number;
+    animTimer: number;
+
+    constructor(playerType: string) {
         this.playerType = playerType; // 'knight' or 'robot'
 
         // Colors based on type
@@ -27,7 +64,7 @@ export class PlayerRenderer {
     }
 
     // Update animation state based on player state
-    updateAnimation(player, deltaTime) {
+    updateAnimation(player: RenderablePlayer, deltaTime: number) {
         this.animTimer++;
         if (this.animTimer >= 10) {
             this.animTimer = 0;
@@ -46,7 +83,7 @@ export class PlayerRenderer {
         }
     }
 
-    draw(ctx, player) {
+    draw(ctx: CanvasRenderingContext2D, player: RenderablePlayer) {
         // Flash when invincible
         if (player.invincible && Math.floor(player.invincibleTimer / 4) % 2 === 0) {
             return;
@@ -63,10 +100,11 @@ export class PlayerRenderer {
         }
     }
 
-    drawKnight(ctx, x, y, player) {
-        const swordColor = player.stats.equipment.sword.color;
-        const armorColor = player.stats.equipment.armor.color;
-        const helmetColor = player.stats.equipment.helmet.color;
+    drawKnight(ctx: CanvasRenderingContext2D, x: number, y: number, player: RenderablePlayer) {
+        const equipment = player.stats?.equipment || player.equipment;
+        const swordColor = equipment?.sword.color || '#95a5a6';
+        const armorColor = equipment?.armor.color || '#95a5a6';
+        const helmetColor = equipment?.helmet.color || '#95a5a6';
 
         // Helmet
         ctx.fillStyle = helmetColor;
@@ -127,8 +165,9 @@ export class PlayerRenderer {
         }
     }
 
-    drawRobot(ctx, x, y, player) {
-        const primaryColor = player.stats.equipment.armor.color;
+    drawRobot(ctx: CanvasRenderingContext2D, x: number, y: number, player: RenderablePlayer) {
+        const equipment = player.stats?.equipment || player.equipment;
+        const primaryColor = equipment?.armor.color || '#3498db';
         const accentColor = this.colors.accent;
 
         // Antenna
