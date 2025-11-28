@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow:
+        0 0 60px rgba(138, 43, 226, 0.4),
+        0 0 100px rgba(138, 43, 226, 0.2),
+        inset 0 0 30px rgba(0, 0, 0, 0.8);
+    border: 4px solid #6b5b95;
+}
+
+#game-container::before {
+    content: 'RETRO GAME JAM: GO NUTS!';
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffd700;
+    font-size: 16px;
+    text-shadow:
+        3px 3px 0 #ff6b6b,
+        -1px -1px 0 #4ecdc4,
+        0 0 20px rgba(255, 215, 0, 0.5);
+    white-space: nowrap;
+    letter-spacing: 2px;
+}
+
+canvas {
+    display: block;
+    border: 4px solid #333;
+    border-radius: 8px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Scanline effect overlay */
+#game-container::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    border-radius: 8px;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+}
