@@ -30,6 +30,13 @@ export class Player {
         this.knockbackX = 0;
         this.knockbackY = 0;
 
+        // Jump mechanics
+        this.velocityY = 0;
+        this.isGrounded = true;
+        this.jumpForce = -12;
+        this.gravity = 0.5;
+        this.groundY = y + this.height; // Will be set properly in update
+
         // Animation
         this.animFrame = 0;
         this.animTimer = 0;
@@ -85,19 +92,16 @@ export class Player {
     }
 
     update(inputState, groundY) {
+        this.groundY = groundY;
+
         // Handle knockback
         if (this.knockbackX !== 0) {
             this.x += this.knockbackX;
             this.knockbackX *= 0.8;
             if (Math.abs(this.knockbackX) < 0.5) this.knockbackX = 0;
         }
-        if (this.knockbackY !== 0) {
-            this.y += this.knockbackY;
-            this.knockbackY *= 0.8;
-            if (Math.abs(this.knockbackY) < 0.5) this.knockbackY = 0;
-        }
 
-        // Movement
+        // Horizontal movement
         let moving = false;
         if (inputState.left) {
             this.x -= this.speed;
@@ -109,25 +113,34 @@ export class Player {
             this.facing = 1;
             moving = true;
         }
-        if (inputState.up) {
-            this.y -= this.speed;
-            moving = true;
-        }
-        if (inputState.down) {
-            this.y += this.speed;
-            moving = true;
+
+        // Jump - only when grounded
+        if (inputState.up && this.isGrounded) {
+            this.velocityY = this.jumpForce;
+            this.isGrounded = false;
         }
 
-        // Walk animation
-        if (moving) {
+        // Apply gravity
+        this.velocityY += this.gravity;
+        this.y += this.velocityY;
+
+        // Ground collision
+        const groundLevel = groundY - this.height;
+        if (this.y >= groundLevel) {
+            this.y = groundLevel;
+            this.velocityY = 0;
+            this.isGrounded = true;
+        }
+
+        // Walk animation (only when moving on ground)
+        if (moving && this.isGrounded) {
             this.walkCycle += 0.2;
-        } else {
+        } else if (this.isGrounded) {
             this.walkCycle = 0;
         }
 
-        // Bounds checking
+        // Bounds checking (horizontal only)
         this.x = Math.max(0, Math.min(CANVAS_WIDTH - this.width, this.x));
-        this.y = Math.max(groundY - 150, Math.min(groundY - this.height, this.y));
 
         // Attack
         if (inputState.attack && this.attackCooldown <= 0) {
@@ -375,5 +388,7 @@ export class Player {
         this.invincibleTimer = 0;
         this.knockbackX = 0;
         this.knockbackY = 0;
+        this.velocityY = 0;
+        this.isGrounded = true;
     }
 }

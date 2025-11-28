@@ -5,6 +5,7 @@ import { LevelManager } from './levels.js';
 import { Shop } from './shop.js';
 import { UI } from './ui.js';
 import { checkCollision, Particle, DamageNumber, randomRange } from './utils.js';
+import { sound } from './sound.js';
 
 class Game {
     constructor() {
@@ -73,11 +74,15 @@ class Game {
                 // Input handling only
                 if (input.isMenuUp()) {
                     this.ui.menuSelection = Math.max(0, this.ui.menuSelection - 1);
+                    sound.menuSelect();
                 }
                 if (input.isMenuDown()) {
                     this.ui.menuSelection = Math.min(this.ui.menuOptions.length - 1, this.ui.menuSelection + 1);
+                    sound.menuSelect();
                 }
                 if (input.isConfirm()) {
+                    sound.menuConfirm();
+                    sound.init(); // Initialize audio context on first user interaction
                     this.initGame(this.ui.menuSelection === 1);
                 }
                 break;
@@ -147,6 +152,9 @@ class Game {
                     const isCrit = Math.random() < player.critChance;
                     if (isCrit) {
                         damage *= player.critMultiplier;
+                        sound.criticalHit();
+                    } else {
+                        sound.hit();
                     }
 
                     const killed = enemy.takeDamage(damage, player.facing);
@@ -174,6 +182,8 @@ class Game {
                         // Reward players
                         player.addExp(enemy.exp);
                         player.addGold(enemy.gold);
+                        sound.enemyDeath();
+                        sound.coin();
 
                         // Death particles
                         for (let i = 0; i < 15; i++) {
@@ -209,6 +219,7 @@ class Game {
                 if (checkCollision(player, enemy.getHitbox())) {
                     const knockback = player.x < enemy.x ? -1 : 1;
                     const damage = player.takeDamage(enemy.damage, knockback);
+                    sound.playerHurt();
 
                     this.damageNumbers.push(new DamageNumber(
                         player.x + player.width / 2,
@@ -228,6 +239,7 @@ class Game {
                 if (checkCollision(player, proj.getHitbox())) {
                     const knockback = proj.vx > 0 ? 1 : -1;
                     const damage = player.takeDamage(proj.damage, knockback);
+                    sound.playerHurt();
 
                     this.damageNumbers.push(new DamageNumber(
                         player.x + player.width / 2,
