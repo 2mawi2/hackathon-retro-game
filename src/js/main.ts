@@ -6,6 +6,9 @@ import { Shop } from './shop';
 import { UI } from './ui';
 import { checkCollision, Particle, DamageNumber, randomRange } from './utils';
 import { sound } from './sound';
+import { SkillTree } from './skills/skillTree';
+import { SkillTreeUI } from './ui/skillTreeUI';
+import { PlayerStats } from './playerStats';
 
 class Game {
     canvas: HTMLCanvasElement;
@@ -16,6 +19,9 @@ class Game {
     levelManager: LevelManager;
     shop: Shop;
     ui: UI;
+    skillTree: SkillTree;
+    skillTreeUI: SkillTreeUI;
+    previewStats: PlayerStats;
     particles: Particle[];
     damageNumbers: DamageNumber[];
     groundY: number;
@@ -36,6 +42,9 @@ class Game {
         this.levelManager = new LevelManager();
         this.shop = new Shop();
         this.ui = new UI();
+        this.skillTree = new SkillTree();
+        this.skillTreeUI = new SkillTreeUI();
+        this.previewStats = new PlayerStats();
 
         this.particles = [];
         this.damageNumbers = [];
@@ -88,6 +97,16 @@ class Game {
     update() {
         switch (this.state) {
             case GameState.MENU:
+                // Skill tree preview from menu
+                if (input.isJustPressed('k') || input.isJustPressed('KeyK')) {
+                    this.skillTreeUI.toggle();
+                }
+                if (this.skillTreeUI.isOpen()) {
+                    // Use preview stats for menu (no purchases possible without player)
+                    this.skillTreeUI.update(input, this.skillTree, this.previewStats);
+                    return;
+                }
+
                 // Input handling only
                 if (input.isMenuUp()) {
                     this.ui.menuSelection = Math.max(0, this.ui.menuSelection - 1);
@@ -105,12 +124,24 @@ class Game {
                 break;
 
             case GameState.PLAYING:
+                // Update skill tree UI if open
+                if (this.skillTreeUI.isOpen()) {
+                    this.skillTreeUI.update(input, this.skillTree, this.players[0].stats);
+                    return;
+                }
+
+                // Skill tree toggle (works even when paused)
+                if (input.isJustPressed('k') || input.isJustPressed('KeyK')) {
+                    this.skillTreeUI.toggle();
+                    return;
+                }
+
                 if (input.isCancel()) {
                     this.paused = !this.paused;
                 }
 
                 if (this.paused) {
-                    if (input.isDown('s') || input.isDown('KeyS')) {
+                    if (input.isJustPressed('b') || input.isJustPressed('KeyB')) {
                         this.state = GameState.SHOP;
                         this.paused = false;
                     }
@@ -166,9 +197,10 @@ class Game {
                 if (enemy.dead) return;
 
                 if (checkCollision(hitbox, enemy.getHitbox())) {
-                    // Calculate damage
-                    let damage = player.damage;
+                    // Calculate damage (use getEffectiveDamage for berserker mode)
+                    let damage = player.getEffectiveDamage();
                     const isCrit = Math.random() < player.critChance;
+                    const isBerserker = player.isBerserkerActive();
                     if (isCrit) {
                         damage *= player.critMultiplier;
                         sound.criticalHit();
@@ -178,12 +210,16 @@ class Game {
 
                     const killed = enemy.takeDamage(damage, player.facing);
 
-                    // Damage number
+                    // Damage number - red for berserker, gold for crit, white for normal
+                    let damageColor = '#fff';
+                    if (isCrit) damageColor = '#ffd700';
+                    else if (isBerserker) damageColor = '#ff4444';
+
                     this.damageNumbers.push(new DamageNumber(
                         enemy.x + enemy.width / 2,
                         enemy.y,
                         damage,
-                        isCrit ? '#ffd700' : '#fff'
+                        damageColor
                     ));
 
                     // Hit particles
@@ -200,7 +236,13 @@ class Game {
                     if (killed) {
                         // Reward players
                         player.addExp(enemy.exp);
-                        player.addGold(enemy.gold);
+
+                        // Gold Rush: +75% gold from enemies
+                        let goldReward = enemy.gold;
+                        if (player.stats.skillModifiers.goldMult > 0) {
+                            goldReward = Math.floor(goldReward * (1 + player.stats.skillModifiers.goldMult));
+                        }
+                        player.addGold(goldReward);
                         sound.enemyDeath();
                         sound.coin();
 
@@ -216,11 +258,11 @@ class Game {
                             ));
                         }
 
-                        // Gold number
+                        // Gold number (show actual amount received)
                         this.damageNumbers.push(new DamageNumber(
                             enemy.x + enemy.width / 2,
                             enemy.y - 20,
-                            '+' + enemy.gold + 'G',
+                            '+' + goldReward + 'G',
                             '#ffd700'
                         ));
                     }
@@ -303,6 +345,8 @@ class Game {
         switch (this.state) {
             case GameState.MENU:
                 this.ui.drawMenu(this.ctx);
+                // Draw skill tree UI on top if open
+                this.skillTreeUI.draw(this.ctx, this.skillTree, this.previewStats);
                 break;
 
             case GameState.PLAYING:
@@ -321,12 +365,17 @@ class Game {
                         this.state = GameState.PLAYING;
                     } else if (action === 'shop') {
                         this.state = GameState.SHOP;
+                    } else if (action === 'skillTree') {
+                        this.skillTreeUI.toggle();
                     }
                 }
 
                 if (this.paused && this.state === GameState.PLAYING) {
                     this.ui.drawPauseOverlay(this.ctx);
                 }
+
+                // Draw skill tree UI on top of everything
+                this.skillTreeUI.draw(this.ctx, this.skillTree, this.players[0].stats);
                 break;
 
             case GameState.GAME_OVER:

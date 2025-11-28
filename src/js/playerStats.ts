@@ -14,6 +14,10 @@ export interface SkillModifiers {
     shieldAbility: boolean;
     lifeSteal: number;
     attackSpeed: number;
+    berserkerMode: boolean;
+    secondWind: boolean;
+    secondWindUsed: boolean;
+    goldMult: number;
     [key: string]: number | boolean;
 }
 
@@ -89,7 +93,11 @@ export class PlayerStats {
             dashAbility: false,
             shieldAbility: false,
             lifeSteal: 0,
-            attackSpeed: 1
+            attackSpeed: 1,
+            berserkerMode: false,
+            secondWind: false,
+            secondWindUsed: false,
+            goldMult: 0
         };
 
         // Equipment
@@ -187,8 +195,17 @@ export class PlayerStats {
             dashAbility: false,
             shieldAbility: false,
             lifeSteal: 0,
-            attackSpeed: 1
+            attackSpeed: 1,
+            berserkerMode: false,
+            secondWind: false,
+            secondWindUsed: false,
+            goldMult: 0
         };
         this.recalculate();
+    }
+
+    // Reset second wind for new level
+    resetSecondWind() {
+        this.skillModifiers.secondWindUsed = false;
     }
 }

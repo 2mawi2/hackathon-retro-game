@@ -678,12 +678,20 @@ export class UI {
         ctx.fillStyle = 'rgba(120, 130, 150, 0.9)';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         ctx.shadowBlur = 3;
-        ctx.fillText('UP/DOWN Select  |  ENTER/SPACE Start', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 55);
+        ctx.fillText('UP/DOWN Select  |  ENTER/SPACE Start', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 70);
         ctx.shadowBlur = 0;
+
+        // Upgrade systems hint
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('B = Shop (Buy)', CANVAS_WIDTH / 2 - 80, CANVAS_HEIGHT - 45);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillText('K = Skills', CANVAS_WIDTH / 2 + 80, CANVAS_HEIGHT - 45);
 
         // Credits
         ctx.fillStyle = 'rgba(80, 80, 120, 0.7)';
-        ctx.fillText('Retro Game Jam 2024', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 25);
+        ctx.font = '12px monospace';
+        ctx.fillText('Retro Game Jam 2024', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 20);
     }
 
     drawHUD(ctx: CanvasRenderingContext2D, players: (Player | null)[], levelManager: LevelManager) {
@@ -776,32 +784,56 @@ export class UI {
         ctx.fillStyle = '#ffd700';
         ctx.font = '32px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, 120);
+        ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, 100);
 
         ctx.fillStyle = '#2ecc71';
         ctx.font = '20px "Press Start 2P", monospace';
-        ctx.fillText(levelManager.currentLevel.name, CANVAS_WIDTH / 2, 170);
+        ctx.fillText(levelManager.currentLevel.name, CANVAS_WIDTH / 2, 150);
 
         // Stats could go here
         ctx.fillStyle = '#fff';
         ctx.font = '14px "Press Start 2P", monospace';
-        ctx.fillText('All enemies defeated!', CANVAS_WIDTH / 2, 250);
+        ctx.fillText('All enemies defeated!', CANVAS_WIDTH / 2, 200);
+
+        // Tutorial hint after first level
+        const isFirstLevel = levelManager.currentLevelIndex === 0;
+        if (isFirstLevel) {
+            // Tutorial box
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+            ctx.fillRect(CANVAS_WIDTH / 2 - 200, 230, 400, 100);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(CANVAS_WIDTH / 2 - 200, 230, 400, 100);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '12px "Press Start 2P", monospace';
+            ctx.fillText('TIP: Upgrade your hero!', CANVAS_WIDTH / 2, 255);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px "Press Start 2P", monospace';
+            ctx.fillText('B = Shop (spend gold on gear)', CANVAS_WIDTH / 2, 280);
+            ctx.fillText('K = Skill Tree (spend skill points)', CANVAS_WIDTH / 2, 300);
+            ctx.fillText('Earn skill points by leveling up!', CANVAS_WIDTH / 2, 320);
+        }
 
         // Options
         const blink = Math.floor(Date.now() / 500) % 2;
         ctx.fillStyle = blink ? '#4ecdc4' : '#3498db';
         ctx.font = '16px "Press Start 2P", monospace';
-        ctx.fillText('Press ENTER to continue', CANVAS_WIDTH / 2, 350);
+        ctx.fillText('Press ENTER to continue', CANVAS_WIDTH / 2, isFirstLevel ? 370 : 300);
 
         ctx.fillStyle = '#7f8c8d';
         ctx.font = '12px "Press Start 2P", monospace';
-        ctx.fillText('Press S for Shop', CANVAS_WIDTH / 2, 390);
+        ctx.fillText('B = Shop | K = Skill Tree', CANVAS_WIDTH / 2, isFirstLevel ? 400 : 340);
 
         if (input.isConfirm()) {
             return 'continue';
         }
-        if (input.isDown('s') || input.isDown('KeyS')) {
+        if (input.isDown('b') || input.isDown('KeyB')) {
             return 'shop';
+        }
+        if (input.isDown('k') || input.isDown('KeyK')) {
+            return 'skillTree';
         }
 
         return null;
@@ -879,10 +911,15 @@ export class UI {
         ctx.fillStyle = '#fff';
         ctx.font = '32px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20);
+        ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
 
         ctx.font = '14px "Press Start 2P", monospace';
-        ctx.fillText('Press ESC to resume', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
-        ctx.fillText('Press S for Shop', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
+        ctx.fillText('Press ESC to resume', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '12px "Press Start 2P", monospace';
+        ctx.fillText('B = Shop (gold)', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 50);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillText('K = Skill Tree (skill points)', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 75);
     }
 }

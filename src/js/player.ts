@@ -1,4 +1,6 @@
 import { CANVAS_WIDTH, EquipmentTier, EquipmentTierData, LevelMechanics } from './constants';
+import { PlayerStats } from './playerStats';
+import { sound } from './sound';
 
 export class Player {
     playerNum: number;
@@ -44,6 +46,10 @@ export class Player {
     gold: number;
     type: string;
     colors: { primary: string; secondary: string; accent: string };
+    stats: PlayerStats;
+    canDoubleJump: boolean;
+    hasDoubleJumped: boolean;
+    skillPoints: number;
 
     constructor(playerNum: number, x: number, y: number) {
         this.playerNum = playerNum;
@@ -116,6 +122,12 @@ export class Player {
                 accent: '#2ecc71' // green lights
             };
         }
+
+        // PlayerStats for skill tree
+        this.stats = new PlayerStats();
+        this.canDoubleJump = false;
+        this.hasDoubleJumped = false;
+        this.skillPoints = 0;
     }
 
     calculateStats() {
@@ -125,14 +137,45 @@ export class Player {
         const helmetMult = this.equipment.helmet.multiplier;
         const bootsMult = this.equipment.boots.multiplier;
 
-        this.damage = Math.floor(this.baseDamage * swordMult * (1 + (this.level - 1) * 0.1));
-        this.maxHealth = Math.floor(100 * armorMult * (1 + (this.level - 1) * 0.05));
-        this.defense = Math.floor(5 * helmetMult);
-        this.speed = this.baseSpeed * (0.9 + bootsMult * 0.2);
+        // Apply skill modifiers on top of equipment
+        const skillDamageMult = this.stats.skillModifiers.damageMult;
+        const skillHealthMult = this.stats.skillModifiers.healthMult;
+        const skillDefenseMult = this.stats.skillModifiers.defenseMult;
+        const skillSpeedMult = this.stats.skillModifiers.speedMult;
+
+        this.damage = Math.floor(this.baseDamage * swordMult * (1 + (this.level - 1) * 0.1) * skillDamageMult);
+        const oldMaxHealth = this.maxHealth;
+        this.maxHealth = Math.floor(100 * armorMult * (1 + (this.level - 1) * 0.05) * skillHealthMult);
+        this.defense = Math.floor(5 * helmetMult * skillDefenseMult);
+        this.speed = this.baseSpeed * (0.9 + bootsMult * 0.2) * skillSpeedMult;
+        this.critChance = 0.1 + this.stats.skillModifiers.critChanceBonus;
+        this.critMultiplier = 1.5 + this.stats.skillModifiers.critMultBonus;
+
+        // Update double jump ability
+        this.canDoubleJump = this.stats.skillModifiers.doubleJump;
 
         // Keep health percentage when upgrading
-        const healthPercent = this.health / this.maxHealth;
-        this.health = Math.floor(this.maxHealth * healthPercent);
+        if (oldMaxHealth > 0) {
+            const healthPercent = this.health / oldMaxHealth;
+            this.health = Math.floor(this.maxHealth * healthPercent);
+        }
+    }
+
+    // Get effective damage (includes berserker mode)
+    getEffectiveDamage(): number {
+        let dmg = this.damage;
+
+        // Berserker mode: +40% when below 30% HP
+        if (this.stats.skillModifiers.berserkerMode && this.health < this.maxHealth * 0.3) {
+            dmg = Math.floor(dmg * 1.4);
+        }
+
+        return dmg;
+    }
+
+    // Check if berserker mode is active
+    isBerserkerActive(): boolean {
+        return this.stats.skillModifiers.berserkerMode && this.health < this.maxHealth * 0.3;
     }
 
     update(inputState: { left: boolean; right: boolean; up: boolean; attack: boolean }, groundY: number, levelMechanics?: LevelMechanics) {
@@ -173,10 +216,18 @@ export class Player {
 
         this.x += this.velocityX;
 
-        // Jump - only when grounded
-        if (inputState.up && this.isGrounded) {
-            this.velocityY = this.jumpForce;
-            this.isGrounded = false;
+        // Jump - grounded or double jump
+        if (inputState.up) {
+            if (this.isGrounded) {
+                this.velocityY = this.jumpForce;
+                this.isGrounded = false;
+                this.hasDoubleJumped = false;
+                sound.jump();
+            } else if (this.canDoubleJump && !this.hasDoubleJumped) {
+                this.velocityY = this.jumpForce * 0.85;
+                this.hasDoubleJumped = true;
+                sound.jump();
+            }
         }
 
         // Apply gravity
@@ -249,7 +300,7 @@ export class Player {
         };
     }
 
-    takeDamage(amount, knockbackDir = 0) {
+    takeDamage(amount: number, knockbackDir: number = 0): number {
         if (this.invincible) return 0;
 
         const actualDamage = Math.max(1, amount - this.defense);
@@ -258,6 +309,17 @@ export class Player {
         this.invincibleTimer = 60;
         this.knockbackX = knockbackDir * 8;
 
+        // Second Wind check - auto-heal when near death
+        if (this.health <= 0 && this.stats.skillModifiers.secondWind &&
+            !this.stats.skillModifiers.secondWindUsed) {
+            this.health = Math.floor(this.maxHealth * 0.25);
+            this.stats.skillModifiers.secondWindUsed = true;
+            this.invincible = true;
+            this.invincibleTimer = 120; // Extra invincibility after second wind
+            sound.levelUp(); // Triumphant sound
+            return 0; // Survived!
+        }
+
         if (this.health <= 0) {
             this.health = 0;
         }
@@ -265,22 +327,26 @@ export class Player {
         return actualDamage;
     }
 
-    heal(amount) {
+    heal(amount: number): void {
         this.health = Math.min(this.maxHealth, this.health + amount);
     }
 
-    addExp(amount) {
+    addExp(amount: number): boolean {
         this.exp += amount;
+        let leveledUp = false;
         while (this.exp >= this.expToNextLevel) {
             this.exp -= this.expToNextLevel;
             this.level++;
+            this.stats.skillPoints++; // Grant skill point on level up
             this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
             this.calculateStats();
             this.health = this.maxHealth; // Full heal on level up
+            leveledUp = true;
         }
+        return leveledUp;
     }
 
-    addGold(amount) {
+    addGold(amount: number): void {
         this.gold += amount;
     }
 
@@ -450,5 +516,8 @@ export class Player {
         this.velocityX = 0;
         this.velocityY = 0;
         this.isGrounded = true;
+        this.hasDoubleJumped = false;
+        // Reset second wind for new level
+        this.stats.skillModifiers.secondWindUsed = false;
     }
 }
